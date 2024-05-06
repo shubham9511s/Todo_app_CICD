@@ -1,40 +1,23 @@
-pipeline {
+  pipeline {
     agent any
    
-    environment{
-        SCANNER_HOME= tool 'sonar-scanner'
-    }
-
     stages {
         stage('git-checkout') {
             steps {
-                git branch: 'main', changelog: false, poll: false, url: 'https://github.com/jaiswaladi246/to-do-app.git'
+               git branch: 'main', changelog: false, poll: false, url: 'https://github.com/shubham9511s/Todo_app_CICD.git'
             }
         }
 
-    stage('Sonar Analysis') {
-            steps {
-                   sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.url=URL_OF_SONARQUBE -Dsonar.login=TOKEN_OF_SONARQUBE -Dsonar.projectName=to-do-app \
-                   -Dsonar.sources=. \
-                   -Dsonar.projectKey=to-do-app '''
-               }
-            }
-           
-		stage('OWASP Dependency Check') {
-            steps {
-               dependencyCheck additionalArguments: '--scan ./', odcInstallation: 'DP'
-                    dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
-            }
-        }
-     
-
+ 
          stage('Docker Build') {
             steps {
                script{
-                   withDockerRegistry(credentialsId: '9ea0c4b0-721f-4219-be62-48a976dbeec0') {
-                    sh "docker build -t  todoapp:latest -f docker/Dockerfile . "
-                    sh "docker tag todoapp:latest username/todoapp:latest "
-                 }
+                   withDockerRegistry(credentialsId: 'dockerhub') {
+                        sh"docker bulid -t todo_app:latest -f backend/Dockerfile"
+                        sh"docker tag todo_app:latest shubhamshinde2025/todo_app:latest"
+                      
+    
+                    }
                }
             }
         }
@@ -42,26 +25,24 @@ pipeline {
         stage('Docker Push') {
             steps {
                script{
-                   withDockerRegistry(credentialsId: '9ea0c4b0-721f-4219-be62-48a976dbeec0') {
-                    sh "docker push  username/todoapp:latest "
-                 }
+                   withDockerRegistry(credentialsId: 'dockerhub') {
+                         sh"docker push shubhamshinde2025/todo_app:latest"
+                    }
                }
             }
         }
-        stage('trivy') {
-            steps {
-               sh " trivy username/todoapp:latest"
-            }
-        }
+    
 		stage('Deploy to Docker') {
             steps {
                script{
-                   withDockerRegistry(credentialsId: '9ea0c4b0-721f-4219-be62-48a976dbeec0') {
-                    sh "docker run -d --name to-do-app -p 4000:4000 username/todoapp:latest "
-                 }
+                     withDockerRegistry(credentialsId: 'dockerhub') {
+                      sh"docker run -d --name todo_app -p 4000:4000 shubhamshinde2025/todo_app:latest "
+                    
+                }
                }
             }
         }
+        
 
     }
 }
