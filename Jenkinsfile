@@ -9,29 +9,17 @@
         }
 
  
-         stage('Docker Build') {
+         stage('Docker Build & push') {
             steps {
                script{
                    withDockerRegistry(credentialsId: 'dockerhub') {
                         sh"docker bulid -t todo_app:latest -f backend/Dockerfile"
                         sh"docker tag todo_app:latest shubhamshinde2025/todo_app:latest"
-                      
-    
+		        sh"docker push shubhamshinde2025/todo_app:latest"
                     }
                }
             }
-        }
-
-        stage('Docker Push') {
-            steps {
-               script{
-                   withDockerRegistry(credentialsId: 'dockerhub') {
-                         sh"docker push shubhamshinde2025/todo_app:latest"
-                    }
-               }
-            }
-        }
-    
+        }   
 		stage('Deploy to Docker') {
             steps {
                script{
